@@ -4,7 +4,7 @@ const getAllStates = async (req, res) => {
   const states = await State.find();
   if (!states) return res.status(204).json({ message: "No states found." });
   res.json(states);
-};
+}
 
 /*const createNewEmployee = async (req, res) => {
     if (!req?.body?.firstname || !req?.body?.lastname) {
@@ -58,11 +58,11 @@ const getEmployee = async (req, res) => {
     }
     res.json(employee);
 }
-
+*/
 module.exports = {
-    getAllEmployees,
-    createNewEmployee,
-    updateEmployee,
-    deleteEmployee,
-    getEmployee
-}*/
+    getAllStates
+    //createNewEmployee,
+    //updateEmployee,
+    //deleteEmployee,
+    //getEmployee
+}

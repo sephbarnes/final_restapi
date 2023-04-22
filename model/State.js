@@ -27,7 +27,7 @@ const stateSchema = new Schema({
     required: true,
   },
   admission_number: {
-    type: Integer, //unsure but its a number
+    type: Number, //unsure but its a number
     required: true,
   },
   capital_city: {
@@ -39,11 +39,11 @@ const stateSchema = new Schema({
     required: true,
   },
   population: {
-    type: Integer,
+    type: Number,
     required: true,
   },
   population_rank: {
-    type: Integer,
+    type: Number,
     required: true,
   },
   constitution_url: {
