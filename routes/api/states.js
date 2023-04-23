@@ -9,6 +9,6 @@ router.route("/").get(statesController.getAllStates);
     //.delete(verifyRoles(ROLES_LIST.Admin), employeesController.deleteEmployee);
 
 //router.route("/:id")
-//.get(statesController.getState);
+//.get(statesController.getStateFacts);
 
 module.exports = router;
