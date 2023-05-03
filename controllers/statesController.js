@@ -1,8 +1,10 @@
 const State = require("../model/State");
+var fs = require('fs');
 
 const getAllStates = async (req, res) => {
   //const states = statesData;
-  const states = await State.find();
+  var states = require('../model/statesData.json');
+
   console.log(states);
   if (!states) return res.status(204).json({ message: "No states found." });
   res.json(states);
