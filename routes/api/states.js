@@ -4,6 +4,10 @@ const statesController = require("../../controllers/statesController");
 
 router.route("/").get(statesController.getAllStates);
 
+router.route("/:code/funfact").post(statesController.postFunFacts);
+
+router.route("/:code/funfact").patch(statesController.patchFunFacts);
+
 //router.route("/:id")
 //.get(statesController.getStateFacts);
 
