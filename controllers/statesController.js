@@ -1,15 +1,33 @@
 const { query } = require("express");
 const State = require("../model/State");
-var fs = require('fs');
+const verifyStates = require("../middleware/verifyStates");
 
 const getAllStates = async (req, res) => {
   //const states = statesData;
   var states = require('../model/statesData.json');
 
   console.log(states);
-  if (!states) return res.status(204).json({ message: "No states found." });
+  if (!states) return res.status(204).json({ message: "get all states: No states found." });
   res.json(states);
 }
+
+const getState = async (req, res) => {
+    if (verifyStates(req, res) != true) { //if it returns a false
+        //console.log(false);
+        return res.status(400).json({ 'message': 'get state: not a real state'})
+    }
+    //console.log(true);
+    
+    if (!req?.params?.code) {
+        return res.status(400).json({ 'message': 'get state: not a real state'})
+    }
+
+    var states = require('../model/statesData.json');
+    var state = states.find((state) => state.code == req.params.code);    //find state by statecode in states
+
+    if (!state) return res.status(204).json({ message: "get state: No states found." });
+    res.json(state);
+  }
 
 const postFunFacts = async (req, res) => {
     if (!req?.body?.funfacts) {
@@ -31,22 +49,15 @@ const patchFunFacts = async (req, res) => {
         return res.status(400).json({ 'message': 'fun fact at this index does not exist'})
     }
     try {
-        console.log("HERE");
         const index = req.body.index-1; //fix index to be zero based now
+        console.log(req.params.code);
 
-        const result = await State.find({
-            query: { funfacts: index },
-            update: { $set: { "funfacts.$[element]" : req.body.funfact } },
-            arrayFilters: [ { "element": { index } } ]
+        const result = await State.findOneAndUpdate(
+            {stateCode: req.params.code},               //CHANGE THIS
+            { $set: {funfacts: req.body.funfacts}}, 
+            {arrayFilters: [ { $position: index } ], returnNewDocument: true} ,
+        );
             
-        }).updateOne({
-            funfacts: { $addToSet: {funfacts: req.body.funfacts }}, //CHANGE THIS
-        });
-            
-            
-            //{stateCode: req.body.code},
-            //{$push: {funfacts: req.body.funfacts}},
-        //);
         res.status(201).json(result);
     } catch(err) {
         console.error(err);
@@ -92,6 +103,7 @@ const getEmployee = async (req, res) => {
 */
 module.exports = {
     getAllStates,
+    getState,
     postFunFacts,
     patchFunFacts
 }
