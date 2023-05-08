@@ -3,7 +3,7 @@
 const verifyStates = (req, res) => {
     var states = require('../model/statesData.json'); 
     function getUpperCode(code) {
-        return 
+        return code.toUpperCase();
     }
     var sCode = req.params.code;
     const reqState = sCode.toUpperCase();

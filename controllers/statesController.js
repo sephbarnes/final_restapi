@@ -12,19 +12,20 @@ const getAllStates = async (req, res) => {
 }
 
 const getState = async (req, res) => {
-    if (verifyStates(req, res) != true) { //if it returns a false
-        //console.log(false);
-        return res.status(400).json({ 'message': 'get state: not a real state'})
-    }
-    //console.log(true);
+    var reqState = req.params.code; //get the uri statecode 
+    reqState = reqState.toUpperCase();  //turn the requested statecode to uppercase
     
-    if (!req?.params?.code) {
+    if (/*verifyStates(reqState, res) != true*/false) { //if it returns a false
+        //console.log(false);
         return res.status(400).json({ 'message': 'get state: not a real state'})
     }
 
     var states = require('../model/statesData.json');
-    var state = states.find((state) => state.code == req.params.code);    //find state by statecode in states
-
+    const stateCodes = states.filter(req => req.code).map(element => element.code);
+    var state = states.filter(function(element) {
+        return element.code == reqState;
+    });    //find state by statecode in states
+  
     if (!state) return res.status(204).json({ message: "get state: No states found." });
     res.json(state);
   }
