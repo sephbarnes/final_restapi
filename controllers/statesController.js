@@ -2,24 +2,98 @@ const { query } = require("express");
 const State = require("../model/State");
 const states = require('../model/statesData.json');
 const verifyStates = require("../middleware/verifyStates");
+const verifyStates2 = require("../middleware/verifyStates2");
 
 const getAllStates = async (req, res) => {
   //const states = statesData;
+    if (req.params.contig == true) {
+        //state data for 48, excluding AK & HI
 
-  console.log(states);
+    } else if (req.params.contig == false) {
+        //state data for AK and HI
+
+    }
   if (!states) return res.status(204).json({ message: "get all states: No states found." });
   res.json(states);
 }
 
 const getState = async (req, res) => {
-    verifyStates(req, res); //res gets changed here to be used below
-    const stateRes = states.find(function(element) { //stateRes becomes the state
-        return element.code == res.code;
-    }); 
-    console.log(stateRes);  
+    //verifyStates(req, res); //res gets changed here to be used below
+    
+    var st = req.params.code; //get the uri statecode 
+    const stateCode = st.toUpperCase();  //turn the requested statecode to uppercase
+    const stateCodes = states.filter(req => req.code).map(element => element.code); //map of all statecodes
+    
+    //check if state is in the statesData
+    let isState = 0;
+    isState = stateCodes.find(element => element == stateCode);
+    console.log(isState);
+    console.log(isState);
+    console.log(isState);
+    if(isState == null) {
+        return res.status(204).json({ message: "get state: No state found." });
+    }
+
+    //get state to respond with
+    const stateRes = states.find(function(element) { 
+        return element.code == stateCode;
+    });  
+    console.log(stateRes);
+    
     if (!stateRes) return res.status(204).json({ message: "get state: No states found." });
     res.json(stateRes);
 } 
+
+const getFunFact = async (req, res) => {
+    //check if statecode is valid
+    //verifyStates(req, res); //res gets changed here to be used below
+    var st = req.params.code; //get the uri statecode 
+    const stateCode = st.toUpperCase();  //turn the requested statecode to uppercase
+    const stateCodes = states.filter(req => req.code).map(element => element.code); //map of all statecodes
+    
+    //check if state is in the statesData
+    let isState = stateCodes.find(element => element == stateCode);
+    if(isState == null) {
+        return res.status(204).json({ message: "get state: No state found." });
+    }
+
+    //retrieve a funfact for state using res.code
+    const funFact = await State.findOne({ stateCode: res.code }).exec(); //find state in mongoDB
+    if (!funFact) {
+        return res.status(204).json({ "message": `No state matches ${res.code}.` });
+    }
+
+    const randomNum = Math.floor(Math.random() * 3);
+    console.log(funFact);
+    const fact = funFact.funfacts[randomNum];
+    res.json(fact);
+}
+
+const getCapital = async (req, res) => {
+    //check if statecode is valid
+    //verifyStates(req, res); //res gets changed here to be used below
+    var st = req.params.code; //get the uri statecode 
+    const stateCode = st.toUpperCase();  //turn the requested statecode to uppercase
+    const stateCodes = states.filter(req => req.code).map(element => element.code); //map of all statecodes
+    
+    //check if state is in the statesData
+    let isState = stateCodes.find(element => element == stateCode);
+    if(isState == null) {
+        return res.status(204).json({ message: "get state: No state found." });
+    }
+
+    const stateRes = states.find(function(element) { //stateRes becomes the state
+        return element.code == stateCode;
+    }); 
+    //console.log(stateRes);  
+    if (!stateRes) return res.status(204).json({ message: "get state: No states found." });
+    //access state capital
+
+    const capital = stateRes.capital_city;
+    const stateName = stateRes.state;
+    console.log(capital);
+    res.json({'state':stateName,'capital':capital});
+}
 
 const postFunFacts = async (req, res) => {
     if (!req?.body?.funfacts) {
@@ -37,17 +111,28 @@ const postFunFacts = async (req, res) => {
 }
 
 const patchFunFacts = async (req, res) => {
+    //check if statecode is valid
+    //verifyStates(req, res); //res gets changed here to be used below
+    var st = req.params.code; //get the uri statecode 
+    const stateCode = st.toUpperCase();  //turn the requested statecode to uppercase
+    const stateCodes = states.filter(req => req.code).map(element => element.code); //map of all statecodes
+    
+    //check if state is in the statesData
+    let isState = stateCodes.find(element => element == stateCode);
+    if(isState == null) {
+        return res.status(204).json({ message: "get state: No state found." });
+    }
+    
     if(!req?.body?.index) { //index here cannot be zero-based or it may fail this check by being at index zero
-        return res.status(400).json({ 'message': 'fun fact at this index does not exist'})
+        return res.status(400).json({ 'message': 'index required'})
     }
     try {
         const index = req.body.index-1; //fix index to be zero based now
         console.log(req.params.code);
 
-        const result = await State.findOneAndUpdate(
-            {stateCode: req.params.code},               //CHANGE THIS
-            { $set: {funfacts: req.body.funfacts}}, 
-            {arrayFilters: [ { $position: index } ], returnNewDocument: true} ,
+        const result = await State.updateOne(
+            {stateCode: stateCode}, 
+            {$set: { [`funfacts.${index}`]: req.body.funfact} , returnNewDocument: true} 
         );
             
         res.status(201).json(result);
@@ -56,46 +141,50 @@ const patchFunFacts = async (req, res) => {
     }
 }
 
-/*
-const updateEmployee = async (req, res) => {
-    if (!req?.body?.id) {
-        return res.status(400).json({ 'message': 'ID parameter is required.' });
+const deleteFunFact = async (req, res) => {
+    //check if statecode is valid
+    //verifyStates(req, res); //res gets changed here to be used below
+    var st = req.params.code; //get the uri statecode 
+    const stateCode = st.toUpperCase();  //turn the requested statecode to uppercase
+    const stateCodes = states.filter(req => req.code).map(element => element.code); //map of all statecodes
+    
+    //check if state is in the statesData
+    let isState = stateCodes.find(element => element == stateCode);
+    if(isState == null) {
+        return res.status(204).json({ message: "get state: No state found." });
     }
+    
+    if(!req?.body?.index) { //index here cannot be zero-based or it may fail this check by being at index zero
+        return res.status(400).json({ 'message': 'index required'})
+    }
+    try {
+        const index = req.body.index-1; //fix index to be zero based now
+        console.log(index);
+        
+        const result0 = await State.updateOne(
+            {stateCode: stateCode}, 
+            {$pullAll: {funfacts: req.params.deleteUid}} 
+        );        
+        const result = await State.updateOne(
+            {stateCode: stateCode}, 
+            {$pullAll: {funfacts: [index]}} 
+        );    
+        //var del = await State.updateOne({stateCode: stateCode}, {$unset : {[`funfacts.${index}`]: 1}});
+        //del = await State.updateOne({stateCode: stateCode}, {$pull : {"funfacts": null}});
+        console.log(result);
 
-    const employee = await Employee.findOne({ _id: req.body.id }).exec();
-    if (!employee) {
-        return res.status(204).json({ "message": `No employee matches ID ${req.body.id}.` });
+        res.status(201).json(result);
+    } catch(err) {
+        console.error(err);
     }
-    if (req.body?.firstname) employee.firstname = req.body.firstname;
-    if (req.body?.lastname) employee.lastname = req.body.lastname;
-    const result = await employee.save();
-    res.json(result);
 }
 
-const deleteEmployee = async (req, res) => {
-    if (!req?.body?.id) return res.status(400).json({ 'message': 'Employee ID required.' });
-
-    const employee = await Employee.findOne({ _id: req.body.id }).exec();
-    if (!employee) {
-        return res.status(204).json({ "message": `No employee matches ID ${req.body.id}.` });
-    }
-    const result = await employee.deleteOne(); //{ _id: req.body.id }
-    res.json(result);
-}
-
-const getEmployee = async (req, res) => {
-    if (!req?.params?.id) return res.status(400).json({ 'message': 'Employee ID required.' });
-
-    const employee = await Employee.findOne({ _id: req.params.id }).exec();
-    if (!employee) {
-        return res.status(204).json({ "message": `No employee matches ID ${req.params.id}.` });
-    }
-    res.json(employee);
-}
-*/
 module.exports = {
     getAllStates,
     getState,
+    getFunFact,
+    getCapital,
     postFunFacts,
-    patchFunFacts
+    patchFunFacts,
+    deleteFunFact
 }
