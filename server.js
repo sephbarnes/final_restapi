@@ -8,6 +8,7 @@ const { logger } = require('./middleware/logEvents');
 const errorHandler = require('./middleware/errorHandler');
 const cookieParser = require('cookie-parser');
 const credentials = require('./middleware/credentials');
+const verifyStates = require('./middleware/verifyStates');
 const mongoose = require('mongoose');
 const connectDB = require('./config/dbConn');
 const PORT = process.env.PORT || 3500;
@@ -24,6 +25,9 @@ app.use(logger);
 // Handle options credentials check - before CORS!
 // and fetch cookies credentials requirement
 app.use(credentials);
+
+//middleware for verify states
+//app.use(verifyStates);
 
 // Cross Origin Resource Sharing
 app.use(cors(corsOptions));
@@ -77,7 +81,7 @@ app.all("*", (req, res) => {
     res.status(404);
     if (req.accepts("html")) {
         res.sendFile(path.join(__dirname, "views", "404.html"));
-    } else if (req.accepts("json")) {
+    } else if (req.accepts("json")) { 
         res.json({ "error": "404 Not Found" });
     } else {
         res.type("txt").send("404 Not Found");

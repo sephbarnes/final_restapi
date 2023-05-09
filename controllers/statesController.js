@@ -1,10 +1,10 @@
 const { query } = require("express");
 const State = require("../model/State");
+const states = require('../model/statesData.json');
 const verifyStates = require("../middleware/verifyStates");
 
 const getAllStates = async (req, res) => {
   //const states = statesData;
-  var states = require('../model/statesData.json');
 
   console.log(states);
   if (!states) return res.status(204).json({ message: "get all states: No states found." });
@@ -12,23 +12,14 @@ const getAllStates = async (req, res) => {
 }
 
 const getState = async (req, res) => {
-    var reqState = req.params.code; //get the uri statecode 
-    reqState = reqState.toUpperCase();  //turn the requested statecode to uppercase
-    
-    if (/*verifyStates(reqState, res) != true*/false) { //if it returns a false
-        //console.log(false);
-        return res.status(400).json({ 'message': 'get state: not a real state'})
-    }
-
-    var states = require('../model/statesData.json');
-    const stateCodes = states.filter(req => req.code).map(element => element.code);
-    var state = states.filter(function(element) {
-        return element.code == reqState;
-    });    //find state by statecode in states
-  
-    if (!state) return res.status(204).json({ message: "get state: No states found." });
-    res.json(state);
-  }
+    verifyStates(req, res); //res gets changed here to be used below
+    const stateRes = states.find(function(element) { //stateRes becomes the state
+        return element.code == res.code;
+    }); 
+    console.log(stateRes);  
+    if (!stateRes) return res.status(204).json({ message: "get state: No states found." });
+    res.json(stateRes);
+} 
 
 const postFunFacts = async (req, res) => {
     if (!req?.body?.funfacts) {
